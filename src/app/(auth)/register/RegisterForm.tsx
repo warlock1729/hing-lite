@@ -13,6 +13,7 @@ import Image from "next/image";
 import { Divider } from "@heroui/react";
 import RegisterIllustration from "@/assets/register_illustration.avif";
 import { Caption, Heading3, Heading5, SmallText } from "@/components/typography";
+import Logo from "@/components/Logo";
 export default function RegisterForm() {
   const {
     register,
@@ -38,7 +39,6 @@ export default function RegisterForm() {
         setError("root.serverError", { message: result.error });
       }
     }
-    console.log(result);
   });
   return (
     <>
@@ -60,14 +60,8 @@ export default function RegisterForm() {
           <CardHeader className="flex flex-col items-center justify-center">
             <div className="flex flex-col gap-2 items-center ">
               <div className="flex items-center gap-3">
-                <Image
-                  src={
-                    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzYiIGhlaWdodD0iOTEiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0ibS4yMzQgNjkuNjQgMTMuOTItMTAuNjY0YzcuMzk1IDkuNjUyIDE1LjI1MiAxNC4xIDIzLjk5OCAxNC4xIDguNyAwIDE2LjMzNC00LjM5NSAyMy4zOTYtMTMuOTcxTDc1LjY2NyA2OS41MWMtMTAuMTkgMTMuODA4LTIyLjg1MyAyMS4xMDQtMzcuNTE1IDIxLjEwNC0xNC42MTUgMC0yNy40LTcuMjQ5LTM3LjkxOC0yMC45NzZaIiBmaWxsPSJ1cmwoI2EpIi8+PHBhdGggZD0iTTM4LjEwNSAyMy4yOTEgMTMuMzMgNDQuNjQxIDEuODc3IDMxLjM2IDM4LjE1Ny4wOTRsMzUuOTk2IDMxLjI4OC0xMS41MDYgMTMuMjM2TDM4LjEwNSAyMy4yOVoiIGZpbGw9InVybCgjYikiLz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIuMjM0IiB5MT0iODAuNDk0IiB4Mj0iNzUuNjY3IiB5Mj0iODAuNDk0IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agc3RvcC1jb2xvcj0iIzg5MzBGRCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzQ5Q0NGOSIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMS44NzciIHkxPSIzMC4zOSIgeDI9Ijc0LjE1MyIgeTI9IjMwLjM5IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agc3RvcC1jb2xvcj0iI0ZGMDJGMCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQzgwMCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg=="
-                  }
-                  width={30}
-                  height={15}
-                  alt=""
-                />
+                       <Logo width={23} alt="" />
+             
                 <h1>Register</h1>
               </div>
               <Heading5> Welcome to Hing </Heading5>

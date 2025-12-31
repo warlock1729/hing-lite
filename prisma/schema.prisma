@@ -65,6 +65,7 @@ model WorkspaceMember {
   userId      Int
   workspaceId Int
   role        WorkspaceRole
+  isRemoved   Boolean @default(false)
 
   user      User      @relation(fields: [userId], references: [id])
   workspace Workspace @relation(fields: [workspaceId], references: [id])
@@ -76,6 +77,7 @@ model Workspace {
   id        Int      @id @default(autoincrement())
   name      String
   createdAt DateTime @default(now())
+  inviteCode String?  @default(uuid())
 
   projects Project[]
   members  WorkspaceMember[]

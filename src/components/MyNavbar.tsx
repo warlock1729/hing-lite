@@ -4,8 +4,8 @@ import Logo from './Logo'
 
 export default function MyNavbar() {
   return (
-    <Navbar className='bg-indigo-600 h-12'>
-      <NavbarItem><Logo width={19} alt="Logo"/></NavbarItem>
+    <Navbar maxWidth='full' className='bg-slate-800 h-12 '>
+      <NavbarItem className='flex gap-2 font-extrabold  text-white '><Logo width={29} alt="Logo" className='-mr-1.5'/></NavbarItem>
     </Navbar>
   )
 }

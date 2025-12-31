@@ -27,6 +27,7 @@ export default {
         }
         return null;
       },
-    }),
+    })
+    
   ],
 } satisfies NextAuthConfig;
