@@ -16,6 +16,8 @@ import SideNavlist from "./SideNavlist";
 import { notFound } from "next/navigation";
 import { Workspace } from "@/types";
 import SideNavtButtons from "./SideNavtButtons";
+import CreateWorkspaceModal from "./WorkspaceActionModal";
+import CreateTaskModal from "@/components/CreateTaskForm";
 type SidebarItemType = {
   label: string;
   key: string;
@@ -93,9 +95,7 @@ function Sidebar({workspace}:{workspace:Workspace}) {
         />
       </div>
       <Divider orientation="horizontal" />
-
       <SideNavtButtons />
-
       <Divider orientation="horizontal" />
 
       <div className=" py-4 w-full h-[60px]  gap-2 items-center ">

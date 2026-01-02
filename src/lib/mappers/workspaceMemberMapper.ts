@@ -2,7 +2,7 @@ import { getWorkspaceMembers } from "@/app/actions/membersActions";
 import { Prisma } from "@/generated/prisma";
 
 export type TableUser = {
-  id: string;
+  id: number;
   name: string;
   email: string;
   avatar?: string;
@@ -36,7 +36,7 @@ export function mapWorkspaceMemberToTableUser(member: {
       : user.email[0].toUpperCase();
 
   return {
-    id: user.id.toString(),
+    id: user.id,
     name: user.name || user.email,
     email: user.email,
     avatar: user.image || undefined,

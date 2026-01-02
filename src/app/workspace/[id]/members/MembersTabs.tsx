@@ -9,16 +9,16 @@ const tabs = [
     count: 12,
     // active: true,
   },
-  {
-    key: "guests",
-    label: "Guests",
-    count: 4,
-  },
-  {
-    key: "pending",
-    label: "Pending Invites",
-    count: 1,
-  },
+  // {
+  //   key: "guests",
+  //   label: "Guests",
+  //   count: 4,
+  // },
+  // {
+  //   key: "pending",
+  //   label: "Pending Invites",
+  //   count: 1,
+  // },
 ];
 
 export function MembersTabs() {

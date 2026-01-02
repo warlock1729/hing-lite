@@ -15,14 +15,14 @@ import { MembersTabs } from "./MembersTabs";
 
 export const users: User[] = []
 
-export default  async function page({params}) {
+export default  async function page({params}:{params:{id:string}}) {
 const workspaceId = Number((await params).id)
-  const result = await getWorkspaceMembers({
-    workspaceId: Number(workspaceId),
-    page: 1,
-    pageSize: 20,
-  });
-    const users = mapWorkspaceMembersToTableUsers(result.data);
+  // const result = await getWorkspaceMembers({
+  //   workspaceId: Number(workspaceId),
+  //   page: 1,
+  //   pageSize: 20,
+  // });
+  //   const users = mapWorkspaceMembersToTableUsers(result.data);
 
   return (
     <div>
@@ -57,8 +57,10 @@ const workspaceId = Number((await params).id)
       <MembersTabs />
 
       <div className="mx-4 mt-2">
-        <UsersTable users={users} />
-        <TableFooter from={1} to={4} total={12} disablePrev />
+        <UsersTable 
+        workspaceId={workspaceId}
+        // users={users} 
+        />
       </div>
     </div>
   );

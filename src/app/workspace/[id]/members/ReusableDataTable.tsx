@@ -1,5 +1,6 @@
 "use client";
 
+import { Spinner } from "@heroui/react";
 import {
   Table,
   TableHeader,
@@ -21,13 +22,17 @@ export type Column<T> = {
 interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
-  emptyText?: string;
+  emptyContent?: ReactNode;
+  loadingContent?: ReactNode;
+  isLoading?:boolean
 }
 
 export function DataTable<T extends { id: string | number }>({
   columns,
   data,
-  emptyText = "No data found",
+  emptyContent = "No data found",
+  loadingContent=<Spinner />,
+  isLoading=false
 }: DataTableProps<T>) {
   return (
     <Table
@@ -53,7 +58,9 @@ export function DataTable<T extends { id: string | number }>({
 
       <TableBody
         items={data}
-        emptyContent={emptyText}
+        emptyContent={emptyContent}
+        loadingContent={loadingContent}
+        isLoading={isLoading}
       >
         {(item) => (
           <TableRow key={item.id}>

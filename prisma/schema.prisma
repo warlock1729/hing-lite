@@ -29,8 +29,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  taskAssignees    TaskAssignee[]
   workspaceMembers WorkspaceMember[]
+
+  createdTasks  Task[] @relation("TaskCreator")
+  assignedTasks Task[] @relation("TaskAssignee")
 }
 
 model Account {
@@ -65,7 +67,7 @@ model WorkspaceMember {
   userId      Int
   workspaceId Int
   role        WorkspaceRole
-  isRemoved   Boolean @default(false)
+  isRemoved   Boolean       @default(false)
 
   user      User      @relation(fields: [userId], references: [id])
   workspace Workspace @relation(fields: [workspaceId], references: [id])
@@ -74,10 +76,12 @@ model WorkspaceMember {
 }
 
 model Workspace {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
-  inviteCode String?  @default(uuid())
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  people      Int
+  createdAt   DateTime @default(now())
+  inviteCode  String?  @default(uuid())
 
   projects Project[]
   members  WorkspaceMember[]
@@ -99,34 +103,40 @@ model Space {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  tasks      Task[]
-  
+  tasks     Task[]
+
   project   Project @relation(fields: [projectId], references: [id])
   projectId Int
 }
 
-
 model Task {
-  id        Int            @id @default(autoincrement())
-  name      String
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @default(now()) @updatedAt
-  status    TaskStatus
-  assignees TaskAssignee[]
+  id        Int          @id @default(autoincrement())
+  title      String
+  description String    
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+  dueDate   DateTime
+  priority  TaskPriority
 
-  spaceId Int?
-  space   Space? @relation(fields: [spaceId], references: [id])
+  status       TaskStatus
+  assignedToId Int
+  createdById  Int
+
+  spaceId    Int?
+  space      Space? @relation(fields: [spaceId], references: [id])
+  assignedTo User   @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdBy  User   @relation("TaskCreator", fields: [createdById], references: [id])
 }
 
-model TaskAssignee {
-  taskId Int
-  userId Int
+// model TaskAssignee {
+//   taskId Int
+//   userId Int
 
-  task Task @relation(fields: [taskId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+//   task Task @relation(fields: [taskId], references: [id])
+//   user User @relation(fields: [userId], references: [id])
 
-  @@id([taskId, userId])
-}
+//   @@id([taskId, userId])
+// }
 
 enum TaskStatus {
   OPEN
@@ -134,11 +144,8 @@ enum TaskStatus {
   CLOSED
 }
 
-
-// model Sprint {
-//   id        Int      @id @default(autoincrement())
-//   startTime DateTime
-//   endTime   DateTime
-
-//   tasks Task[]
-// }
+enum TaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}

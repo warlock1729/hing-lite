@@ -19,15 +19,33 @@ export default {
             return null;
           }
 
-          const { id } = user;
           return {
-            ...user,
-            id: id.toString(),
+            id: user.id,
+            email:user.email,
+            image:user.image,
+            name:user.name
           };
         }
         return null;
       },
-    })
-    
+    }),
   ],
+  callbacks: {
+    async session({ session, user,token }) {
+      if(session?.user){
+        session.user.id = token.userId as number
+        session.user.image = token.picture
+      }
+      return session; 
+    },
+  
+    async jwt({token,user}) {
+      if(user){
+        token.userId= Number(user.id)
+        token.picture=user.image
+      }
+      return token
+    },
+  },
+ 
 } satisfies NextAuthConfig;

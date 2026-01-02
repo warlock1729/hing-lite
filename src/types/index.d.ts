@@ -39,6 +39,8 @@ type Member = {
 type Workspace = {
     name: string;
     id: number;
+    people:number;
+    description:string,
     createdAt: Date;
     _count?: {
         projects: number;
