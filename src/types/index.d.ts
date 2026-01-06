@@ -49,3 +49,16 @@ type Workspace = {
     projects: Project[];
     members: Member[];
 } ;
+
+export type PaginationType<T> = Pick<Awaited<ReturnType<T>>, "pagination">["pagination"];
+
+type ArrayElement<T> = T extends readonly (infer U)[] ? U : never;
+
+type TableTask = {
+  id: number;
+  name: string;
+  assignee: string;
+  dueDate: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+};

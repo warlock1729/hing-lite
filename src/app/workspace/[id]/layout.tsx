@@ -1,26 +1,26 @@
-import MyNavbar from "@/components/MyNavbar";
+import MyNavbar from "@/components/navbar/MyNavbar";
 import Sidebar from "./Sidebar";
 import { SmallText } from "@/components/typography";
 import { Divider } from "@heroui/divider";
-import React from "react";
-import { getUserWorkspaceByIdOrDefaultWorkspace } from "@/app/actions/workspaceActions";
+import  { ReactNode } from "react";
+import { getUserWorkspaceById } from "@/app/actions/workspaceActions";
+import { notFound } from "next/navigation";
 
 
 export default async function HomeLayout({
   children,params
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
     params:Promise<{ id: string }>
 }>) {
-  let workspaceId:number|null;
   const id =  Number((await params).id)
   if(isNaN(id) || id===0){
-    workspaceId=null
+    return notFound
   }
-  else {
-    workspaceId=id
-  }
-    const workspace = await getUserWorkspaceByIdOrDefaultWorkspace(workspaceId)
+
+  const result = await getUserWorkspaceById(id)
+  if(result.status==='error') return "Workspace not found"
+  const workspace = result.data
   return (
     <div>
       <MyNavbar />

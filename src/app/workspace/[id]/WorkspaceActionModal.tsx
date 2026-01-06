@@ -19,6 +19,8 @@ import {
   updateWorkspace,
 } from "@/app/actions/workspaceActions";
 import { z } from "zod";
+import { toast } from "react-toastify";
+import { ActionResult, Workspace } from "@/types";
 
 type WorkspaceProps = {
   id: number;
@@ -53,15 +55,20 @@ export default function CreateWorkspaceModal(workspaceData: WorkspaceProps) {
   });
 
   const handleCreateWorkspace = handleSubmit(async (data: FormSchema) => {
-    console.log(data);
 
-    let result;
+    let result:ActionResult<Omit<Workspace, "members" | "projects">>;
     if (data.mode === "Create") {
       result = await createWorkspace(data);
-    } else if (workspaceData.mode === "Edit") {
+    } else   {
       result = await updateWorkspace(data);
     }
-    console.log(result);
+    if(result.status==='success'){
+    reset()
+    workspaceData.setIsVisible(false)
+    toast.success("Workspace created successfully")
+    }else{
+      toast.error(result.error as string)
+    }
   });
 
   useEffect(() => {
@@ -155,7 +162,7 @@ export default function CreateWorkspaceModal(workspaceData: WorkspaceProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="">
+              <Button isDisabled={!isValid} isLoading={isLoading || isSubmitting} type="submit" className="">
                 {workspaceData.mode} Workspace
               </Button>
             </ModalFooter>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, Chip, Button, Code, Select, SelectItem, Spinner } from "@heroui/react";
-import { DataTable, Column } from "./ReusableDataTable";
+import { DataTable, Column } from "@/components/ReusableDataTable";
 import { IoClipboardOutline } from "react-icons/io5";
 import {
   mapWorkspaceMembersToTableUsers,
@@ -14,6 +14,7 @@ import {
 } from "@/app/actions/membersActions";
 import { TableFooter } from "./TableFooter";
 import { useSession } from "next-auth/react";
+import { PaginationType } from "@/types";
 const roleColorMap = {
   Owner: "primary",
   Admin: "secondary",
@@ -25,10 +26,7 @@ const statusColorMap = {
   Removed: "warning",
 } as const;
 
-type paginationType = Pick<
-  Awaited<ReturnType<typeof getWorkspaceMembers>>,
-  "pagination"
->["pagination"];
+
 
 export function UsersTable({ workspaceId }: { workspaceId: number }) {
   // { users }: { users: User[] }
@@ -130,7 +128,7 @@ export function UsersTable({ workspaceId }: { workspaceId: number }) {
     },
   ];
   const [users, setUsers] = useState<User[]>([]);
-  const [pagination, setPagination] = useState<paginationType>({
+  const [pagination, setPagination] = useState<PaginationType<typeof getWorkspaceMembers>>({
     hasNextPage: false,
     hasPreviousPage: false,
     page: 1,

@@ -12,14 +12,22 @@ import { isValid } from "zod/v3";
 import Image from "next/image";
 import { Divider } from "@heroui/react";
 import RegisterIllustration from "@/assets/register_illustration.avif";
-import { Caption, Heading3, Heading5, SmallText } from "@/components/typography";
+import {
+  Caption,
+  Heading3,
+  Heading5,
+  SmallText,
+} from "@/components/typography";
 import Logo from "@/components/Logo";
+import Link from "next/link";
+import { toast } from "react-toastify";
+
 export default function RegisterForm() {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
-    setError,
+    setError,reset
   } = useForm({
     resolver: zodResolver(registerSchema),
     mode: "onTouched",
@@ -29,6 +37,8 @@ export default function RegisterForm() {
     const result = await registerUserAction(data);
     if (result.status === "success") {
       // setError(na)
+      toast.success("Registered successfully")
+      reset()
     } else {
       if (Array.isArray(result.error)) {
         result.error.forEach((e) => {
@@ -60,11 +70,17 @@ export default function RegisterForm() {
           <CardHeader className="flex flex-col items-center justify-center">
             <div className="flex flex-col gap-2 items-center ">
               <div className="flex items-center gap-3">
-                       <Logo width={23} alt="" />
-             
+                <Logo width={23} alt="" />
+
                 <h1>Register</h1>
               </div>
               <Heading5> Welcome to Hing </Heading5>
+              <p className="font-light text-small">
+                <span>Already registered ? </span>{" "}
+                <Link href="/login" className="text-small">
+                  Log in
+                </Link>
+              </p>
             </div>
           </CardHeader>
           <CardBody>

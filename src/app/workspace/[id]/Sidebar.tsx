@@ -10,82 +10,19 @@ import {
   IoHomeOutline,
   IoPeopleOutline,
 } from "react-icons/io5";
-import { IoMdArrowDropright, IoMdArrowDropdown } from "react-icons/io";
+import { IoMdArrowDropright, IoMdArrowDropdown, IoMdAdd } from "react-icons/io";
 import ProjectsListbox from "./ProjectsListbox";
 import SideNavlist from "./SideNavlist";
 import { notFound } from "next/navigation";
 import { Workspace } from "@/types";
 import SideNavtButtons from "./SideNavtButtons";
 import CreateWorkspaceModal from "./WorkspaceActionModal";
-import CreateTaskModal from "@/components/CreateTaskForm";
-type SidebarItemType = {
-  label: string;
-  key: string;
-};
-
-
-// const projects = [
-//   { key: "Home", label: "Home", startContent: <IoHomeOutline size={16} /> },
-//   {
-//     key: "Members",
-//     label: "Members",
-//     startContent: <IoPeopleOutline size={16} />,
-//   },
-//   {
-//     key: "My Tasks",
-//     label: "My Tasks",
-//     startContent: <IoAlbumsOutline size={16} />,
-//   },
-// ];
-
-const projectsWithSpaces = [
-  {
-    key: "home",
-    label: "Home",
-    color: "bg-green-400",
-    startIcon: <circle className="h-2 w-2 bg-green-400 rounded-full" />,
-    spaces: [
-      {
-        key: "testing",
-        label: "Testing",
-      },
-      {
-        key: "frontend",
-        label: "Frontend",
-      },
-      {
-        key: "backend",
-        label: "Backend",
-      },
-    ],
-  },
-  {
-    key: "inbox",
-    label: "Inbox",
-    color: "bg-pink-400",
-    startIcon: <circle className="h-2 w-2 bg-blue-400 rounded-full" />,
-
-    spaces: [],
-  },
-  {
-    key: "notifications",
-    label: "Notifications",
-    color: "bg-blue-400",
-    startIcon: <circle className="h-2 w-2 bg-purple-400 rounded-full" />,
-
-    spaces: [],
-  },
-];
-
-
-type Props = {
-  children: ReactNode;
-};
-
-
+import { Button } from "@heroui/button";
+import CreateProjectForm from "./CreateProjectForm";
 
 function Sidebar({workspace}:{workspace:Workspace}) {
   const rawProjects = workspace.projects
+
   // const projects = rawProjects.map(p=>{})
   return (
     <aside className=" w-[20%]">
@@ -95,15 +32,21 @@ function Sidebar({workspace}:{workspace:Workspace}) {
         />
       </div>
       <Divider orientation="horizontal" />
-      <SideNavtButtons />
+      <SideNavtButtons workspaceId={workspace.id}/>
       <Divider orientation="horizontal" />
 
       <div className=" py-4 w-full h-[60px]  gap-2 items-center ">
-        <div className="text-neutral-400 text-sm font-semibold ml-4">
-          PROJECTS
+        <div className="text-neutral-400 text-sm font-semibold ml-4 flex justify-between pr-2">
+          <span>
+            PROJECTS
+            </span>
+            
+            <div className="p-1  rounded-full hover:bg-primary-50">
+            <CreateProjectForm />
+            </div>
         </div>
           
-        <ProjectsListbox projects={rawProjects}/>
+        <ProjectsListbox workspaceId={workspace.id} projects={rawProjects}/>
 
         <Divider orientation="horizontal" className="mt-4 self-center" />
       </div>

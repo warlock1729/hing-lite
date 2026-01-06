@@ -8,16 +8,18 @@ import { registerSchema, RegisterSchema } from "@/lib/schemas/registerSchema";
 import { ActionResult } from "@/types";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
+import { getDefaultWorkspaceId } from "./workspaceActions";
 
 export async function signInUserAction(
   data: LoginSchema
-): Promise<ActionResult<object>> {
+): Promise<ActionResult<string>> {
   try {
+    const wid = await getDefaultWorkspaceId(data.email);
     const result = await signIn("credentials", {
       ...data,
       redirect: false,
     });
-    return { status: "success", data: result };
+    return { status: "success", data: `/workspace/${wid}/home` };
   } catch (error) {
     console.log(error);
     if (error instanceof AuthError) {
@@ -47,16 +49,31 @@ export async function registerUserAction(
     const existingUser = await prisma.user.findUnique({
       where: { email: email },
     });
+
     if (existingUser) return { status: "error", error: "User already exists" };
+    const newUser = await prisma.user.create({
+      data: {
+        name: fullName,
+        email,
+        passwordHash: hashedPassword,
+        workspaceMembers: {
+          create: {
+            role: "OWNER",
+            workspace: {
+              create: {
+                description: `default workspace`,
+                name: "Default workspace",
+                people: 2,
+              },
+            },
+          },
+        },
+      },
+    });
+
     return {
       status: "success",
-      data: await prisma.user.create({
-        data: {
-          name: fullName,
-          email,
-          passwordHash: hashedPassword,
-        },
-      }),
+      data: newUser,
     };
   } catch (error) {
     console.log(error);
@@ -68,5 +85,6 @@ export async function getUserByEmailAction(email: string) {
   const user = await prisma.user.findUnique({
     where: { email },
   });
+
   return user;
 }

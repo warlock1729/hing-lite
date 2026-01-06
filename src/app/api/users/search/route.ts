@@ -8,9 +8,9 @@ export async function GET(req: NextRequest) {
   const name = searchParams.get("name")?.trim();
   const workspaceId = Number(searchParams.get("workspaceId"));
 
-  if (!name || name.length < 3 || !workspaceId) {
+  if (!name || name.length < 1 || !workspaceId) {
     return NextResponse.json(
-      { message: "name (min 3 chars) and valid workspaceId are required" },
+      { message: "name (min 1 chars) and valid workspaceId are required" },
       { status: 400 }
     );
   }

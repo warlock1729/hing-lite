@@ -9,12 +9,13 @@ export default auth((req)=>{
     const isAuthRoute = authRoutes.includes(nextUrl.pathname)
     
     if(isPublic){
+        if(nextUrl.pathname==='/') return NextResponse.redirect(new URL('/login',nextUrl))
         return NextResponse.next()
     } 
 
     if(isAuthRoute){
         if(isLoggedIn){
-            return NextResponse.redirect(new URL('/home',nextUrl))
+            return NextResponse.redirect(new URL('/workspace',nextUrl))
         }else{
         return NextResponse.next()
         }
