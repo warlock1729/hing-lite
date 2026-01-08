@@ -2,7 +2,7 @@
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
-import React from "react";
+import React, { useRef, useState } from "react";
 import { GiPadlock } from "react-icons/gi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,7 @@ import { RegisterSchema, registerSchema } from "@/lib/schemas/registerSchema";
 import { registerUserAction } from "@/app/actions/authActions";
 import { isValid } from "zod/v3";
 import Image from "next/image";
-import { Divider } from "@heroui/react";
+import { Avatar, Divider } from "@heroui/react";
 import RegisterIllustration from "@/assets/register_illustration.avif";
 import {
   Caption,
@@ -21,24 +21,27 @@ import {
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import { DEFAULT_PROFILE_IMAGE } from "@/constants";
 
 export default function RegisterForm() {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
-    setError,reset
+    setError,
+    reset,
   } = useForm({
     resolver: zodResolver(registerSchema),
-    mode: "onTouched",
+    mode: "all",
   });
+const [preview, setPreview] = useState<string>(DEFAULT_PROFILE_IMAGE);
 
   const onSubmit = handleSubmit(async (data: RegisterSchema) => {
     const result = await registerUserAction(data);
     if (result.status === "success") {
       // setError(na)
-      toast.success("Registered successfully")
-      reset()
+      toast.success("Registered successfully");
+      reset();
     } else {
       if (Array.isArray(result.error)) {
         result.error.forEach((e) => {
@@ -50,6 +53,8 @@ export default function RegisterForm() {
       }
     }
   });
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  console.log(errors)
   return (
     <>
       <div className="w-2/3 ">
@@ -84,8 +89,51 @@ export default function RegisterForm() {
             </div>
           </CardHeader>
           <CardBody>
-            <form onSubmit={onSubmit}>
+            <form onSubmit={onSubmit} encType="multipart/form-data">
               <div className="space-y-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  {...register("profileImage", {
+                    onChange: (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setPreview(URL.createObjectURL(file));
+                      }
+                    },
+                  })}
+                  ref={(e) => {
+                    register("profileImage").ref(e);
+                    fileInputRef.current = e;
+                  }}
+                />
+
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="relative group"
+                  >
+                    <Avatar
+                      src={preview}
+                      className="w-24 h-24 cursor-pointer"
+                      isBordered
+                    />
+
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                      <span className="text-white text-small">Change</span>
+                    </div>
+                  </button>
+
+                  {errors.profileImage && (
+                    <p className="text-danger text-small">
+                      {errors.profileImage.message as string}
+                    </p>
+                  )}
+                </div>
+
                 <Input
                   label="Email"
                   variant="bordered"

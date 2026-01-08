@@ -25,7 +25,7 @@ function Sidebar({workspace}:{workspace:Workspace}) {
 
   // const projects = rawProjects.map(p=>{})
   return (
-    <aside className=" w-[20%]">
+    <aside className=" w-[20%]  sticky top-[48px] min-h-[calc(100vh-48px)]">
       <div className=" p-1 w-full h-[60px] flex gap-2 items-center ">
        <SideNavlist
         currentWorkspaceId={workspace?.id }

@@ -10,6 +10,7 @@ import Logo from "../Logo";
 import { Avatar } from "@heroui/avatar";
 import { auth, signOut } from "@/auth";
 import UserMenu from "./UserMenu";
+import { DEFAULT_PROFILE_IMAGE } from "@/constants";
 
 export default async function MyNavbar() {
   const session = await auth();
@@ -27,7 +28,7 @@ export default async function MyNavbar() {
               <Avatar
                 size="sm"
                 className="cursor-pointer"
-                src={user?.image || ""}
+                src={user?.image || DEFAULT_PROFILE_IMAGE}
                 name={user?.name?.at(0)}
               />
             </DropdownTrigger>

@@ -34,7 +34,7 @@ export default function SideNavButtons({
       key: "My Tasks",
       label: "My Tasks",
       startContent: <IoAlbumsOutline className="mr-1" size={16} />,
-      path: "/my-tasks",
+      path: `/workspace/${workspaceId}/my-tasks`,
     },
   ];
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { TableFooter } from "./TableFooter";
 import { Spinner } from "@heroui/react";
 import {
   Table,
@@ -10,7 +11,7 @@ import {
   TableCell,
   
 } from "@heroui/table";
-import { Key, ReactNode } from "react";
+import { Key, ReactNode, Suspense } from "react";
 
 export type Column<T> = {
    key: keyof T | "actions";
@@ -35,6 +36,8 @@ export function DataTable<T extends { id: string | number }>({
   isLoading=false
 }: DataTableProps<T>) {
   return (
+    <>
+    <Suspense fallback={<Spinner />}>
     <Table
       aria-label="Reusable data table"
       removeWrapper
@@ -78,5 +81,8 @@ export function DataTable<T extends { id: string | number }>({
         )}
       </TableBody>
     </Table>
+</Suspense>
+
+</>
   );
 }

@@ -31,8 +31,9 @@ model User {
 
   workspaceMembers WorkspaceMember[]
 
-  createdTasks  Task[] @relation("TaskCreator")
-  assignedTasks Task[] @relation("TaskAssignee")
+  createdTasks  Task[]   @relation("TaskCreator")
+  assignedTasks Task[]   @relation("TaskAssignee")
+  // sprints       Sprint[]
 }
 
 model Account {
@@ -81,18 +82,17 @@ model Workspace {
   description String
   people      Int
   createdAt   DateTime @default(now())
-  inviteCode  String?  @default(uuid())
-
+  inviteCode  String  @default(uuid()) @unique
   projects Project[]
   members  WorkspaceMember[]
 }
 
 model Project {
-  id        Int      @id @default(autoincrement())
-  name      String
+  id          Int      @id @default(autoincrement())
+  name        String
   description String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 
   spaces      Space[]
   workspaceId Int
@@ -100,25 +100,26 @@ model Project {
 }
 
 model Space {
-  id        Int      @id @default(autoincrement())
-  name      String
+  id          Int      @id @default(autoincrement())
+  name        String
   description String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  tasks     Task[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  tasks       Task[]
 
   project   Project @relation(fields: [projectId], references: [id])
   projectId Int
 }
 
 model Task {
-  id        Int          @id @default(autoincrement())
-  title      String
-  description String    
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @default(now()) @updatedAt
-  dueDate   DateTime
-  priority  TaskPriority
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+  dueDate     DateTime
+  priority    TaskPriority
+  // sprintId    Int
 
   status       TaskStatus
   assignedToId Int
@@ -128,6 +129,7 @@ model Task {
   space      Space? @relation(fields: [spaceId], references: [id])
   assignedTo User   @relation("TaskAssignee", fields: [assignedToId], references: [id])
   createdBy  User   @relation("TaskCreator", fields: [createdById], references: [id])
+  // sprint     Sprint @relation(fields: [sprintId], references: [id])
 }
 
 // model TaskAssignee {
@@ -152,4 +154,24 @@ enum TaskPriority {
   HIGH
   MEDIUM
   LOW
+}
+
+// model Sprint {
+//   id          Int      @id @default(autoincrement())
+//   title       String
+//   startDate   DateTime
+//   endDate     DateTime
+//   createdById Int
+
+//   createdBy User   @relation(fields: [createdById], references: [id])
+//   tasks     Task[]
+// }
+
+model Token {
+  id String @id @default(cuid())
+  email String
+  token String
+  expires DateTime
+
+  @@unique([email,token])
 }

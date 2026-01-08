@@ -1,8 +1,20 @@
 "use client";
 
-import { Avatar, Chip, Button, Code, Select, SelectItem, Spinner } from "@heroui/react";
-import { DataTable, Column } from "@/components/ReusableDataTable";
-import { IoClipboardOutline } from "react-icons/io5";
+import {
+  Avatar,
+  Chip,
+  Button,
+  Code,
+  Select,
+  SelectItem,
+  Spinner,
+  user,
+} from "@heroui/react";
+import {
+  DataTable,
+  Column,
+} from "@/components/ReusableDataTable/ReusableDataTable";
+import { IoClipboardOutline, IoRemoveCircle } from "react-icons/io5";
 import {
   mapWorkspaceMembersToTableUsers,
   TableUser as User,
@@ -12,9 +24,12 @@ import {
   editMemberRole,
   getWorkspaceMembers,
 } from "@/app/actions/membersActions";
-import { TableFooter } from "./TableFooter";
+import { TableFooter } from "@/components/ReusableDataTable/TableFooter";
 import { useSession } from "next-auth/react";
 import { PaginationType } from "@/types";
+import AlertBox from "@/components/Alert/Alert";
+import { removeWorkspaceMember } from "@/app/actions/workspaceActions";
+import { toast } from "react-toastify";
 const roleColorMap = {
   Owner: "primary",
   Admin: "secondary",
@@ -26,15 +41,15 @@ const statusColorMap = {
   Removed: "warning",
 } as const;
 
-
-
-export function UsersTable({ workspaceId }: { workspaceId: number }) {
+export function UsersTable({ workspaceId ,isRemoved}: { workspaceId: number,isRemoved?:boolean}) {
   // { users }: { users: User[] }
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showAlertBox, setShowAlertBox] = useState(false);
+  const [userToRemove, setUserToRemove] = useState<User | null>(null);
   const handleRoleChange = async (userId: number, role: "Admin" | "Member") => {
     setIsLoading(true);
     await editMemberRole({ workspaceId: workspaceId, role, memberId: userId });
-       getWorkspaceMembers({
+    getWorkspaceMembers({
       workspaceId: Number(workspaceId),
       page: pagination?.page,
       pageSize: pagination?.pageSize,
@@ -43,7 +58,7 @@ export function UsersTable({ workspaceId }: { workspaceId: number }) {
       setPagination(result.pagination);
       setUsers(data);
       setCanEditRole(result.canEditRole);
-          setIsLoading(false);
+      setIsLoading(false);
     });
   };
   const session = useSession();
@@ -70,7 +85,7 @@ export function UsersTable({ workspaceId }: { workspaceId: number }) {
       key: "role",
       label: "Role",
       render: (user) => {
-        const canEdit = canEditRole && user.email !== session.data?.user?.email;
+        const canEdit = canEditRole && user.email !== session.data?.user?.email && user.status==='Active';
 
         if (!canEdit) {
           return (
@@ -118,17 +133,36 @@ export function UsersTable({ workspaceId }: { workspaceId: number }) {
     {
       key: "actions",
       label: "",
-      render: () => (
-        <div className="flex justify-end opacity-0 group-hover:opacity-100 transition">
-          <Button isIconOnly size="sm" variant="light">
-            {/* <MoreHorizontal size={18} /> */}
-          </Button>
-        </div>
-      ),
+      render: (user) =>
+        user.status==='Active' && user.email !== session.data?.user?.email &&
+        ["Owner", "Admin"].includes(currentUserRole || "") &&
+        user.role !== "Owner" ? (
+          <div className="flex justify-end opacity-0 group-hover:opacity-100 transition">
+            <Button
+              onPress={() => {
+                setShowAlertBox(true);
+                setUserToRemove(user);
+              }}
+              isIconOnly
+              size="md"
+              variant="light"
+            >
+              <IoRemoveCircle size={20} color="red" />
+            </Button>
+          </div>
+        ) : (
+          <></>
+        ),
     },
   ];
   const [users, setUsers] = useState<User[]>([]);
-  const [pagination, setPagination] = useState<PaginationType<typeof getWorkspaceMembers>>({
+  const currentUserRole = users?.find(
+    (u) => u.id === session.data?.user?.id
+  )?.role;
+
+  const [pagination, setPagination] = useState<
+    PaginationType<typeof getWorkspaceMembers>
+  >({
     hasNextPage: false,
     hasPreviousPage: false,
     page: 1,
@@ -142,40 +176,67 @@ export function UsersTable({ workspaceId }: { workspaceId: number }) {
       workspaceId: Number(workspaceId),
       page: pagination?.page,
       pageSize: pagination?.pageSize,
+      isRemoved:isRemoved
     }).then((result) => {
       const data = mapWorkspaceMembersToTableUsers(result.data);
       setPagination(result.pagination);
       setUsers(data);
       setCanEditRole(result.canEditRole);
     });
-  }, [workspaceId, pagination.page, pagination.pageSize]);
+  }, [workspaceId, pagination.page, pagination.pageSize,isRemoved]);
 
+  const handleRemoveUser = async () => {
+    setIsLoading(true)
+    if (userToRemove) {
+      const result = await removeWorkspaceMember({
+        workspaceId: workspaceId,
+        userId: userToRemove?.id,
+      });
+      if(result?.status==='success'){
+        // setUsers(users=>users.filter(u=>u.id!==userToRemove.id))
+        setUserToRemove(null)
+        setShowAlertBox(false)
+        toast.success("User removed successfully")
 
-    return (
-      <>
-        <DataTable columns={columns} data={users} isLoading={isLoading}/>
-        <TableFooter
-          from={(pagination.page - 1) * pagination.pageSize + 1}
-          to={Math.min(
-            pagination.page * pagination.pageSize - 1,
-            pagination.total
-          )}
-          total={pagination?.total}
-          disablePrev={!pagination.hasPreviousPage}
-          disableNext={!pagination.hasNextPage}
-          onPrev={() =>
-            setPagination((p) => ({
-              ...p,
-              page: p.page - 1,
-            }))
-          }
-          onNext={() =>
-            setPagination((p) => ({
-              ...p,
-              page: p.page + 1,
-            }))
-          }
+      }
+    }
+    setIsLoading(false)
+  };
+  return (
+    <>
+      <DataTable columns={columns} data={users} isLoading={isLoading} />
+      <TableFooter
+        from={(pagination.page - 1) * pagination.pageSize + 1}
+        to={Math.min(
+          pagination.page * pagination.pageSize - 1,
+          pagination.total
+        )}
+        total={pagination?.total}
+        disablePrev={!pagination.hasPreviousPage}
+        disableNext={!pagination.hasNextPage}
+        onPrev={() =>
+          setPagination((p) => ({
+            ...p,
+            page: p.page - 1,
+          }))
+        }
+        onNext={() =>
+          setPagination((p) => ({
+            ...p,
+            page: p.page + 1,
+          }))
+        }
+      />
+      {showAlertBox && (
+        <AlertBox
+          title="Are you sure you want to delete ?"
+          description={`${userToRemove?.name} will be removed from this workspace`}
+          onClose={() => {
+            setShowAlertBox(false);
+          }}
+          rightBtnAction={handleRemoveUser}
         />
-      </>
-    );
+      )}
+    </>
+  );
 }

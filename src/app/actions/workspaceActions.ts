@@ -4,20 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { ActionResult, Workspace } from "@/types";
 import { FormSchema } from "@/lib/schemas/createWorkspaceSchema";
+import { revalidatePath } from "next/cache";
 
-export async function getDefaultWorkspaceId(email:string) {
-  const {id} = (await prisma.workspace.findFirst({
+export async function getDefaultWorkspaceId(email: string) {
+  const { id } = (await prisma.workspace.findFirst({
     where: {
       members: {
         some: {
-          user:{email:email}
+          user: { email: email },
         },
       },
     },
     orderBy: {
       createdAt: "asc",
     },
-    select: {id:true},
+    select: { id: true },
   }))!;
 
   return id;
@@ -26,17 +27,16 @@ export async function getDefaultWorkspaceId(email:string) {
 export async function getUserWorkspaceById(
   workspaceId: number
 ): Promise<ActionResult<Workspace>> {
-  const email = (await auth())?.user?.email;
-  const user = await prisma.user.findUnique({ where: { email: email! } });
-  const id = user?.id;
-  if (!id) throw new Error("Unauthorized");
+  const userId = (await auth())?.user?.id;
+
+  if (!userId) throw new Error("Unauthorized");
 
   const workspace = await prisma.workspace.findFirst({
     where: {
       id: workspaceId,
       members: {
         some: {
-          userId: Number(id),
+          userId: userId,
         },
       },
     },
@@ -59,10 +59,9 @@ export async function getUserWorkspaceById(
       },
     },
   });
-
   return workspace
     ? { status: "success", data: workspace }
-    : { status: "error", error: "Workspace not found" };
+    : { status: "error", error: "Workspeace not found" };
 }
 
 export async function getUserWorkspaces(): Promise<Workspace[]> {
@@ -101,12 +100,10 @@ export async function getUserWorkspaces(): Promise<Workspace[]> {
   return workspaces;
 }
 
-// TypeScript interfaces to define expected data structures
-
 // Create Workspace
 export async function createWorkspace(
   data: Extract<FormSchema, { mode: "Create" }>
-):Promise<ActionResult<Omit<Workspace,'members'|'projects'>>> {
+): Promise<ActionResult<Omit<Workspace, "members" | "projects">>> {
   const session = await auth();
   const userId = session?.user.id;
   if (!userId) throw Error("Unauthorized");
@@ -118,7 +115,7 @@ export async function createWorkspace(
           name,
           description,
           people,
-        },
+        },  
       });
       await prisma.workspaceMember.create({
         data: { workspaceId: newWorkspace.id, role: "OWNER", userId: userId },
@@ -126,17 +123,18 @@ export async function createWorkspace(
       return newWorkspace;
     });
 
-    return {status:"success",data:newWorkspace};
+        revalidatePath('/workspace/[id]',"layout")
+    return { status: "success", data: newWorkspace };
   } catch (error) {
     console.error("Error creating workspace:", error);
-    return {status:'error',error:`${error}`||"Something went wrong"}
+    return { status: "error", error: `${error}` || "Something went wrong" };
   }
 }
 
 // Update Workspace
 export async function updateWorkspace(
   data: Extract<FormSchema, { mode: "Edit" }>
-):Promise<ActionResult<Omit<Workspace,'members'|'projects'>>>  {
+): Promise<ActionResult<Omit<Workspace, "members" | "projects">>> {
   try {
     const { workspaceId: id, name, description, people } = data;
 
@@ -148,11 +146,11 @@ export async function updateWorkspace(
         people,
       },
     });
-
-    return {status:'success',data:updatedWorkspace};
+    revalidatePath('/workspace/[id]',"layout")
+    return { status: "success", data: updatedWorkspace };
   } catch (error) {
     console.error("Error updating workspace:", error);
-    return {status:'error',error:`${error}`||"Something went wrong"}
+    return { status: "error", error: `${error}` || "Something went wrong" };
   }
 }
 
@@ -163,9 +161,26 @@ export async function deleteWorkspace(id: number) {
       where: { id },
     });
 
-    return {status:'success',data:deletedWorkspace};
+    return { status: "success", data: deletedWorkspace };
   } catch (error) {
     console.error("Error deleting workspace:", error);
-    return {status:'error',error:`${error}`||"Something went wrong"}
+    return { status: "error", error: `${error}` || "Something went wrong" };
   }
+}
+
+export async function removeWorkspaceMember({
+  workspaceId,
+  userId,
+}: {
+  workspaceId: number;
+  userId: number;
+}) {
+  try {
+    const user = await prisma.workspaceMember.update({
+      where: { userId_workspaceId: { userId, workspaceId } },
+      data: { isRemoved: true },
+    });
+    revalidatePath('/workspace/[id]/members',"page")
+    return {status:'success',data:null}
+  } catch (error) {}
 }

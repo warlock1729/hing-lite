@@ -33,6 +33,7 @@ type Member = {
     userId: number;
     workspaceId: number;
     role: $Enums.WorkspaceRole;
+    isRemoved:boolean
 };
 
 // Main Workspace type
@@ -54,11 +55,25 @@ export type PaginationType<T> = Pick<Awaited<ReturnType<T>>, "pagination">["pagi
 
 type ArrayElement<T> = T extends readonly (infer U)[] ? U : never;
 
-type TableTask = {
-  id: number;
-  name: string;
-  assignee: string;
-  dueDate: string;
-  status: TaskStatus;
-  priority: TaskPriority;
+
+
+export type AnalyticsStats = {
+  totalTasks: number;
+  completedTasks: number;
+  overdueTasks: number;
+  tasksAssignedToMe: number;
+  totalProjects: number;
+  totalSpaces: number;
+  totalUsers: number;
+};
+
+export type AnalyticsStats = Array<{
+title:string, count:number
+}>;
+
+export type AnalyticsCard = {
+  key: keyof AnalyticsStats;
+  title: string;
+  icon?: ReactNode;
+  value: number;
 };

@@ -10,12 +10,28 @@ export async function regenerateWorkspaceInviteLink({
   workspaceId: string | number;
 }) {
   const wid = Number(workspaceId);
-  await prisma.workspace.update({
+  
+  const {inviteCode} = await prisma.workspace.update({
     where: { id: wid },
     data: { inviteCode: uuidv4() },
   });
 
-  return { status: "success", data: { inviteCode: wid } };
+  return { status: "success", data: { inviteCode: `${inviteCode}` } };
+}
+
+export async function getInviteLink({
+  workspaceId,
+}: {
+  workspaceId: string | number;
+}) {
+  const wid = Number(workspaceId);
+  
+  const w = await prisma.workspace.findFirst({
+    where: { id: wid },
+    // data: { inviteCode: uuidv4() },
+  });
+
+  return { status: "success", data: { inviteCode: `${w?.inviteCode}` } };
 }
 
 export async function removeMemberFromWorkspace({
@@ -58,23 +74,24 @@ type GetWorkspaceMembersParams = {
   workspaceId: number;
   page?: number;
   pageSize?: number;
-  includeRemoved?: boolean;
+  isRemoved?: boolean;
 };
 
 export async function getWorkspaceMembers({
   workspaceId,
   page = 1,
   pageSize = 10,
-  includeRemoved = false,
+  isRemoved
 }: GetWorkspaceMembersParams) {
   if (page < 1) page = 1;
   if (pageSize < 1) pageSize = 10;
 
   const skip = (page - 1) * pageSize;
 
+
   const whereClause = {
     workspaceId,
-    ...(includeRemoved ? {} : { isRemoved: false }),
+    ...(isRemoved!==undefined && {isRemoved:isRemoved}),
   };
 
   const [owner,members, total] = await Promise.all([prisma.workspaceMember.findFirst({

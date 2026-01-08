@@ -35,7 +35,7 @@ export default function WorkspaceDropdown({currentWorkspace,workspaces}:{current
         aria-label="Select Workspace"
         items={workspaces}
         // onSelect={(a)=>alert("a")}
-        onAction={(a)=>{router.push(`/workspace/${a}`)}}
+        onAction={(a)=>{router.push(`/workspace/${a}/home`)}}
         // sele
       >
         {(item) => (

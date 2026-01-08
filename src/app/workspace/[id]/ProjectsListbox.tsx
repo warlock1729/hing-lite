@@ -64,13 +64,10 @@ export default function ProjectsListbox({
                   >
                     <Listbox aria-label="spaces">
                       {project.spaces.map((space) => (
-                        <ListboxItem key={space.name}>
-                          <Link
-                            replace
-                            href={`/workspace/${workspaceId}/space/${space.id}`}
-                          >
+                        <ListboxItem key={space.name} as={Link} href={`/workspace/${workspaceId}/space/${space.id}`} >
+                          <span>
                             {space.name}
-                          </Link>
+                          </span>
                         </ListboxItem>
                       ))}
                     </Listbox>

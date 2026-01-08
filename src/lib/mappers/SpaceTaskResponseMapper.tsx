@@ -1,9 +1,16 @@
-import { getTasksBySpace } from "@/app/actions/taskActions";
+import { getTasksBySpace, getUserTasks } from "@/app/actions/taskActions";
 import { TaskStatus, TaskPriority } from "@/generated/prisma";
-import { TableTask as Task } from "@/types";
 
 
 
+export type Task = {
+  id: number;
+  name: string;
+  assignee: string;
+  dueDate: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+};
 type ResponseTasks = Pick<Awaited<ReturnType<typeof getTasksBySpace>>, "data">['data']
 
 export function mapTaskToFrontend(task: ResponseTasks[number]): Task {
@@ -12,7 +19,7 @@ export function mapTaskToFrontend(task: ResponseTasks[number]): Task {
     id: task.id,
     name: task.title,
     // project: task.space?.project?.name ?? "",
-    assignee: task.assignedTo?.name ?? "Unassigned",
+    assignee: task.assignedTo.name ?? "" ,
     dueDate: task.dueDate.toISOString(),
     status: task.status,
     priority: task.priority,

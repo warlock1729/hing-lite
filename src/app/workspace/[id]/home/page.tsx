@@ -1,4 +1,4 @@
-"use client";
+// "use client";
 
 import {
   Caption,
@@ -7,47 +7,72 @@ import {
   Heading5,
   SmallText,
 } from "@/components/typography";
+import { getAnalyticsStats } from "@/hooks/useAnalytics";
+import { AnalyticsCard, AnalyticsStats, Workspace } from "@/types";
 import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Button, Divider } from "@heroui/react";
-import React from "react";
-import { IoCalendarNumberOutline, IoCalendarOutline } from "react-icons/io5";
+import { Button } from "@heroui/button";
+import { Divider } from "@heroui/divider";
+import {
+  IoBriefcaseOutline,
+  IoCheckboxOutline,
+  IoAlertCircleOutline,
+  IoListOutline,
+  IoPersonOutline,
+  IoCalendarOutline,
+} from "react-icons/io5";
+import { getWorkspaceMembers } from "@/app/actions/membersActions";
+import { fetchWorkspaceById } from "@/lib/helpers/workspace";
+import { getTasksBySpace, getTasksByWorkspace } from "@/app/actions/taskActions";
+import { mapAnalyticsCards } from "@/lib/utils";
 
-export default function HomePage() {
-  const people = [
-    { fullName: "Hardik Jain", email: "hardik.j@neosoftmail.com" },
-    { fullName: "Aniket Ramteke", email: "aniket.ramteke@neosoftmail.com" },
-  ];
-  const projects = [
-    { title: "Hubblehox" },
-    { title: "Schoolerp" },
-    { title: "People Strong" },
-  ];
+const ANALYTICS_CARDS: Omit<AnalyticsCard, "value">[] = [
+  {
+    key: "totalProjects",
+    title: "Total Projects",
+    icon: <IoBriefcaseOutline />,
+  },
+  {
+    key: "totalTasks",
+    title: "Total Tasks",
+    icon: <IoListOutline />,
+  },
+  {
+    key: "tasksAssignedToMe",
+    title: "Assigned Tasks",
+    icon: <IoPersonOutline />,
+  },
+  {
+    key: "completedTasks",
+    title: "Completed Tasks",
+    icon: <IoCheckboxOutline />,
+  },
+  {
+    key: "overdueTasks",
+    title: "Overdue Tasks",
+    icon: <IoAlertCircleOutline />,
+  },
+];
 
-  const cards = [
-    { title: "Total Projects", count: 2 },
-    { title: "Total Tasks", count: 14 },
-    { title: "Assigned Tasks", count: 7 },
-    { title: "Completed Tasks", count: 2 },
-    { title: "Overdue Tasks", count: 0 },
-  ];
 
-  const tasks = [
-    {
-      title: "Conduct usability testing",
-      projectName: "Mobile app development",
-      days: 14,
-    },
-    {
-      title: "Implement offline mode",
-      projectName: "Mobile app development",
-      days: 14,
-    },
-    {
-      title: "Integerate push notifications",
-      projectName: "Mobile app development",
-      days: 14,
-    },
-  ];
+
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const workspaceId = Number(id)
+  const people = await getWorkspaceMembers({workspaceId,isRemoved:false,page:1,pageSize:10})
+  const isPeopleOverflow = people.data?.length >5
+  if(isPeopleOverflow) people.data =  people.data.slice(0,5)
+  const workspaceResult = await fetchWorkspaceById(workspaceId)
+  const projects = workspaceResult.status==='success'?workspaceResult.data.projects:null
+  const data = await getAnalyticsStats({
+    type: "workspace",
+    workspaceId: workspaceId,
+  });
+  const cards = data ? mapAnalyticsCards(ANALYTICS_CARDS,data) : [];
+  const tasks = await getTasksByWorkspace({workspaceId})
   return (
     <div>
       <div className="flex flex-col gap-4">
@@ -62,7 +87,7 @@ export default function HomePage() {
             <Card key={item.title} className="w-full p-2">
               <CardHeader className="text-neutral-500">{item.title}</CardHeader>
               <CardBody>
-                <Heading1>{item.count}</Heading1>
+                <Heading1>{item.value}</Heading1>
               </CardBody>
             </Card>
           );
@@ -75,19 +100,19 @@ export default function HomePage() {
             <Divider orientation="horizontal" className="" />
           </div>
           <CardBody className="flex flex-col gap-3">
-            {tasks.map((task) => {
+            {tasks.data.slice(0,3).map((task) => {
               return (
                 <div key={task.title} className="bg-white p-3">
                   <Heading5 className="mb-2">{task.title}</Heading5>
                   <div className="flex gap-2">
                     <Caption className="font-normal">
-                      {task.projectName}
+                      {task.title}
                     </Caption>
                     <SmallText className="ml-4 flex">
                       {" "}
                       <IoCalendarOutline size={12} />
                       <span className="text-[12px] ml-1">
-                        {task.days} days
+                        Due on : {task.dueDate.toLocaleDateString()} 
                       </span>{" "}
                     </SmallText>
                   </div>
@@ -105,18 +130,18 @@ export default function HomePage() {
           </div>
           <CardBody className="h-fit">
             <div className="h-fit grid grid-cols-2 gap-2">
-              {projects.map((project) => {
+              {projects?.map((p) => {
                 return (
                   <Button
-                    key={project.title}
+                    key={p.name}
                     variant="light"
                     radius={"sm"}
                     className="flex gap-4 h-fit py-2 items-center justify-start border-1 border-neutral-300"
                   >
                     <div className="bg-green-300 px-2 py-1 aspect-square  rounded-sm font-bold ">
-                      {project.title.at(0)}
+                      {p.name.at(0)}
                     </div>
-                    <div className="text-xl">{project.title}</div>
+                    <div className="text-xl">{p.name.length<18?p.name:`${p.name.slice(0,15)}...`}</div>
                   </Button>
                 );
               })}
@@ -130,17 +155,26 @@ export default function HomePage() {
           <div className="px-3">
             <hr className="border-neutral-300 border-dashed" />
           </div>
-          <CardBody>
-            <div className="flex gap-3">
-              {people.map((person) => {
+          <CardBody className="max-w-">
+            <div className="flex gap-3  max-w-full">
+              {people?.data && people.data.map((person) => {
                 return (
-                  <div className="flex flex-col items-center border-1 border-neutral-100 p-4 py-8 gap-1 shadow-md" key={person.email}>
-                    <div className="bg-neutral-300 rounded-full w-10 h-10 flex items-center justify-center">{person.fullName.at(0)}</div>
-                    <span>{person.fullName}</span>
-                   <SmallText className="text-xs">{person.email}</SmallText>
+                  <div
+                    className="flex flex-col items-center border-1  border-neutral-100 p-4 py-8 gap-1 shadow-md"
+                    key={person?.user?.email}
+                  >
+                    <div className="bg-neutral-300 rounded-full w-10 h-10 flex items-center justify-center">
+                      {person?.user?.name?.at(0)}
+                    </div>
+                    <span>{person?.user?.name}</span>
+                    <SmallText className="text-xs">{person?.user?.email}</SmallText>
                   </div>
                 );
               })}
+              {isPeopleOverflow &&    <div
+                    className="flex flex-col items-center justify-center font-light text-neutral-500  p-4 py-8 gap-1 "
+                    key={"more"}
+                  >{`...and ${people?.data?.length - 5} more`}</div>}
             </div>
           </CardBody>
         </Card>

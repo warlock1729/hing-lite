@@ -1,31 +1,23 @@
-// "use client";
-
 import { Heading2, Heading5 } from "@/components/typography";
-import { Button } from "@heroui/button";
-import { IoAddCircleOutline } from "react-icons/io5";
-import { UsersTable } from "./UsersTable";
-
-
-
-
-import { mapWorkspaceMembersToTableUsers, TableUser as User } from "@/lib/mappers/workspaceMemberMapper";
-import { TableFooter } from "./TableFooter";
-import { getWorkspaceMembers } from "@/app/actions/membersActions";
+import { TableUser as User } from "@/lib/mappers/workspaceMemberMapper";
 import { MembersTabs } from "./MembersTabs";
+import { fetchWorkspaceById } from "@/lib/helpers/workspace";
+import InviteMemberModal from "@/components/InviteLinkModalWrapper";
+import { Suspense } from "react";
+import { Spinner } from "@heroui/spinner";
 
-export const users: User[] = []
+export const users: User[] = [];
 
-export default  async function page({params}:{params:{id:string}}) {
-const workspaceId = Number((await params).id)
-  // const result = await getWorkspaceMembers({
-  //   workspaceId: Number(workspaceId),
-  //   page: 1,
-  //   pageSize: 20,
-  // });
-  //   const users = mapWorkspaceMembersToTableUsers(result.data);
+export default async function page({ params }: { params: { id: string } }) {
+  const workspaceId = Number((await params).id);
+  const workspaceResult = await fetchWorkspaceById(workspaceId);
+  if (workspaceResult.status === "error") {
+    return "Workspace not found";
+  }
+  const workspace = workspaceResult.data;
 
   return (
-    <div>
+    <div className="">
       <div className="mb-8 flex justify-between items-center">
         <div className="flex flex-col gap-4">
           <Heading2>Members</Heading2>
@@ -38,30 +30,28 @@ const workspaceId = Number((await params).id)
           <div className="flex items-center gap-4">
             <div className="hidden md:flex flex-col items-end mr-2">
               <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                12/20 Seats Used
+                {`${workspace.members.filter((u) => !u.isRemoved).length}/${
+                  workspace.people
+                } Seats Used`}
               </span>
-              <div className="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mt-1 overflow-hidden">
-                <div className="h-full bg-green-500 w-[60%] rounded-full"></div>
+              <div className="w-24 h-1.5 rounded-full mt-1 overflow-hidden">
+                <progress value={workspace.members.filter((u) => !u.isRemoved).length.toString()} max={workspace.people.toString()} color="blue">32%</progress>
               </div>
             </div>
-            <Button className="flex items-center justify-center gap-2 bg-secondary hover:bg-secondary-hover text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">
-              <span className="material-symbols-outlined text-[20px]">
-                <IoAddCircleOutline />
-              </span>
-              Invite Member
-            </Button>
+            <InviteMemberModal workspaceId={workspaceId} />
           </div>
         </div>
       </div>
 
-      <MembersTabs />
-
-      <div className="mx-4 mt-2">
-        <UsersTable 
+      <MembersTabs
         workspaceId={workspaceId}
-        // users={users} 
-        />
-      </div>
+        tabsCount={[
+          { key: "full", count: workspace.members.length },
+          { key: "active", count: workspace.members.filter(u=>u.isRemoved===false).length },
+          { key: "removed", count: workspace.members.filter(u=>u.isRemoved===true).length },
+        ]}
+      />
+      <Suspense fallback={<Spinner />}></Suspense>
     </div>
   );
 }

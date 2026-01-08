@@ -1,7 +1,8 @@
 import { TaskStatus } from "@/generated/prisma";
+import { AnalyticsCard, AnalyticsStats } from "@/types";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-
+;
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -54,4 +55,14 @@ export const getDaysLeftToDuedate = (dueDate: string) => {
   const diffTime = due.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
+
+
+export function mapAnalyticsCards(ANALYTICS_CARDS:Omit<AnalyticsCard, "value">[],stats: AnalyticsStats): AnalyticsCard[] {
+  return ANALYTICS_CARDS.map((card) => ({
+    ...card,
+    value: stats[card.key],
+  }));
+}
+
+
 

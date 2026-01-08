@@ -40,6 +40,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { statusToLabel, TaskStatusColorMap } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { fetchUsersByName } from "@/lib/helpers/task";
+import { DescriptionEditor } from "../(task_id)/components/DescriptionEditor";
+import { toast } from "react-toastify";
 
 const TaskPriorityColorMapper = {
   [TaskPriority.HIGH]: "red",
@@ -87,11 +89,12 @@ export default function EditTaskForm({
     formState: { errors, isSubmitting, isLoading, isValid },
   } = useForm<EditTaskFormValues>({
     resolver: zodResolver(editTaskSchema),
+    mode: "all",
     defaultValues: {
       title: task?.title,
       description: task?.description ?? "",
       status: task?.status,
-      dueDate: task?.dueDate,
+      dueDate: task?.dueDate.toISOString().slice(0, 10),
       priority: task?.priority,
       assigneeId: task?.assignedTo.id,
     },
@@ -99,12 +102,18 @@ export default function EditTaskForm({
   const router = useRouter();
   const workspaceId = 5;
   const onSubmit = handleSubmit(async (values: EditTaskFormValues) => {
-    await createOrEditTask({
+    const result = await createOrEditTask({
       taskId: taskId,
       spaceId: task.spaceId!,
       data: values,
     });
+    if(result.status==="success"){
+      toast.success("Task edited successfully")
     router.refresh();
+    }else{
+      toast.error(result.error  )
+    }
+
   });
 
   const [search, setSearch] = useState("");
@@ -114,7 +123,7 @@ export default function EditTaskForm({
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.length < 3) {
+    if (!debouncedQuery || debouncedQuery.length < 1) {
       setUsers([]);
       return;
     }
@@ -134,9 +143,8 @@ export default function EditTaskForm({
 
     fetchUsers();
   }, [debouncedQuery, workspaceId]);
-  console.log(errors.description);
+  console.log(errors, isValid);
   return (
-    
     <form className=" w-full" onSubmit={onSubmit}>
       <div className="flex w-full">
         {/* LEFT MAIN CONTENT */}
@@ -207,12 +215,19 @@ export default function EditTaskForm({
             <div className="text-xs font-semibold text-default-500 mb-2">
               DESCRIPTION
             </div>
-            <Textarea
+            {/* <Textarea
               isInvalid={!!errors.description?.message}
               errorMessage={errors.description?.message}
               minRows={6}
               {...register("description")}
+            /> */}
+            <Controller name="description" control={control}
+            render={({field})=>{
+              return <DescriptionEditor value={field.value} onChange={field.onChange} />
+            }}
             />
+              
+              
           </div>
 
           {/* subtasks */}
@@ -255,11 +270,11 @@ export default function EditTaskForm({
           <div className="flex justify-between text-sm">
             <div>
               <div className="text-default-400">Created</div>
-              <div>{task?.createdAt.toLocaleString()}</div>
+              <div>{task?.createdAt.toLocaleString().slice(0,17)}</div>
             </div>
             <div>
               <div className="text-default-400">Updated</div>
-              <div>{task?.updatedAt.toLocaleString()}</div>
+              <div>{task?.updatedAt.toLocaleString().slice(0,17)}</div>
             </div>
           </div>
 
@@ -343,22 +358,23 @@ export default function EditTaskForm({
             <Controller
               name="dueDate"
               control={control}
-              render={({ field }) => (
-                <Input
-                  radius="sm"
-                  startContent={<IoCalendarNumber size={16} />}
-                  type="date"
-                  value={
-                    field.value ? field.value.toISOString().slice(0, 10) : ""
-                  }
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value ? new Date(e.target.value) : null
-                    )
-                  }
-                />
-              )}
+              render={({ field }) => {
+                console.log(field.value, typeof field.value);
+                return (
+                  <Input
+                    radius="sm"
+                    startContent={<IoCalendarNumber size={16} />}
+                    type="date"
+                    value={field.value}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => {
+                      console.log(e.target.value, typeof e.target.value);
+
+                      field.onChange(e.target.value);
+                    }}
+                  />
+                );
+              }}
             />
           </div>
 

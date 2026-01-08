@@ -1,32 +1,49 @@
 // "use client";
 import { Heading1 } from "@/components/typography";
 import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Button } from "@heroui/button";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@heroui/react";
-import React from "react";
-import { IoPencilOutline, IoPersonCircleOutline } from "react-icons/io5";
-import { GiPencil } from "react-icons/gi";
+
 import TaskTable from "@/components/SpaceTasksTable";
 import { getSpaceDetailsById } from "@/app/actions/spaceActions";
+import { getAnalyticsStats } from "@/hooks/useAnalytics";
+import { mapAnalyticsCards } from "@/lib/utils";
+import { IoAlertCircleOutline, IoBriefcaseOutline, IoCheckboxOutline, IoListOutline, IoPersonOutline } from "react-icons/io5";
+import { AnalyticsCard } from "@/types";
+import CreateTaskForm from "@/components/CreateTaskForm";
 
-export default async function Space({params}:{params:Promise<{spaceId:string}>}) {
+const ANALYTICS_CARDS: Omit<AnalyticsCard, "value">[] = [
+
+  {
+    key: "totalTasks",
+    title: "Total Tasks",
+    icon: <IoListOutline />,
+  },
+  {
+    key: "tasksAssignedToMe",
+    title: "Assigned Tasks",
+    icon: <IoPersonOutline />,
+  },
+  {
+    key: "completedTasks",
+    title: "Completed Tasks",
+    icon: <IoCheckboxOutline />,
+  },
+  {
+    key: "overdueTasks",
+    title: "Overdue Tasks",
+    icon: <IoAlertCircleOutline />,
+  },
+];
+
+export default async function Space({params}:{params:Promise<{spaceId:string,id:string}>}) {
   const spaceId = Number((await params).spaceId)
+  const workspaceId = Number((await params).id)
   const space = await getSpaceDetailsById(spaceId)
 
-  const cards = [
-    // { title: "Total Spaces", count: 2 },
-    { title: "Total Tasks", count: 14 },
-    { title: "Assigned Tasks", count: 7 },
-    { title: "Completed Tasks", count: 2 },
-    { title: "Overdue Tasks", count: 0 },
-  ];
+const data = await getAnalyticsStats({
+    type: "space",
+    spaceId:spaceId
+  });
+  const cards = data ? mapAnalyticsCards(ANALYTICS_CARDS,data) : [];
   const projectName = space?.project.name;
   const spaceName = space?.name
 
@@ -54,7 +71,7 @@ export default async function Space({params}:{params:Promise<{spaceId:string}>})
             <Card key={item.title} className="w-full p-2">
               <CardHeader className="text-neutral-500">{item.title}</CardHeader>
               <CardBody>
-                <Heading1>{item.count}</Heading1>
+                <Heading1>{item.value}</Heading1>
               </CardBody>
             </Card>
           );
@@ -65,7 +82,8 @@ export default async function Space({params}:{params:Promise<{spaceId:string}>})
 
       <div>
         
-     <TaskTable spaceId={Number((await params).spaceId)}/>
+              <CreateTaskForm />
+     <TaskTable key={new Date().toUTCString()} spaceId={Number((await params).spaceId)} workspaceId={workspaceId}/>
       </div>
     </div>
   );

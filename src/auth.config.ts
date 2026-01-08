@@ -29,6 +29,7 @@ export default {
         return null;
       },
     }),
+
   ],
   callbacks: {
     async session({ session, user,token }) {

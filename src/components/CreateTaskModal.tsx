@@ -13,6 +13,7 @@ import {
   Autocomplete,
   Chip,
   Avatar,
+  Textarea,
 } from "@heroui/react";
 import {Button} from "@heroui/button"
 import { useForm, Controller } from "react-hook-form";
@@ -24,7 +25,8 @@ import { LabelText } from "./typography";
 import { fetchUsersByName } from "@/lib/helpers/task";
 import { createOrEditTask } from "@/app/actions/taskActions";
 import { EditTaskFormValues, editTaskSchema } from "@/lib/schemas/editTaskSchema";
-import { TaskPriority } from "@/generated/prisma";
+import { TaskPriority, TaskStatus } from "@/generated/prisma";
+import { toast } from "react-toastify";
 
 type User = {
   id: number;
@@ -43,12 +45,13 @@ export default function CreateTaskModal({
 }) {
   const { id: workspaceId,spaceId } = useParams<{ id: string,spaceId:string }>();
 
-  const { control, handleSubmit, reset, formState:{isValid,isLoading,isSubmitting} } = useForm<EditTaskFormValues>({
+  const { control, handleSubmit, reset, formState:{isValid,isLoading,isSubmitting,errors},register } = useForm<EditTaskFormValues>({
     resolver: zodResolver(editTaskSchema),
     defaultValues: {
       title: "",
       dueDate:(new Date()).toISOString(),
       priority: undefined,
+      status:TaskStatus.TODO
     },
   });
 
@@ -70,7 +73,6 @@ export default function CreateTaskModal({
           debouncedQuery,
           Number(workspaceId)
         );
-        console.log(data);
         setUsers(data);
       } finally {
         setLoadingUsers(false);
@@ -79,13 +81,20 @@ export default function CreateTaskModal({
 
     fetchUsers();
   }, [debouncedQuery, workspaceId]);
-
+  console.log(errors)
   
   const onSubmit = async (data:EditTaskFormValues) => {
     const result  = await createOrEditTask({spaceId:Number(spaceId),data:data})
+    if(result.status==="success"){
+      toast.success("Task created")
     reset();
     setSearch("")
     onClose();
+    }
+    else{
+      toast.error("Task created")
+
+    }
   };
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
@@ -108,11 +117,20 @@ export default function CreateTaskModal({
               )}
             />
 
+              <Textarea
+              label="Description"
+              placeholder="Description"
+              {...register("description")}
+                 isInvalid={!!errors.description}
+              errorMessage={errors.description?.message}
+            />
+            
+
             <Controller
               name="dueDate"
               control={control}
               render={({ field }) => (
-                <Input {...field} type="date" label="Due Date" />
+                <Input {...field} type="date" min={new Date().getTime()} label="Due Date" />
               )}
             />
 
@@ -133,7 +151,7 @@ export default function CreateTaskModal({
                       <Chip
                         className="w-full h-fit p-2"
                         onClose={() => {
-                          field.onChange(undefined);
+                          field.onChange(null);
                           setSearch("");
                         }}
                         variant="flat"
@@ -159,8 +177,8 @@ export default function CreateTaskModal({
                     inputValue={search}
                     onInputChange={setSearch}
                     onSelectionChange={(key) =>{
-                      alert(key)
-                      field.onChange(key ? Number(key) : undefined)
+                      // alert(key)
+                      field.onChange(key ? Number(key) : null)
                     }
                     }
                   >
@@ -202,10 +220,10 @@ export default function CreateTaskModal({
           </ModalBody>
 
           <ModalFooter className="justify-between">
-            <Button variant="light" onPress={onClose}>
+            <Button variant="light" onPress={()=>{reset();onClose()}}>
               Cancel
             </Button>
-            <Button disabled={false} isLoading={isLoading || isSubmitting} color="primary" type="submit">
+            <Button   isLoading={isLoading || isSubmitting} color="secondary" type="submit">
               Create Task
             </Button>
           </ModalFooter>

@@ -3,7 +3,7 @@
 import { Button } from "@heroui/button";
 import { IoMdArrowDropleftCircle, IoMdArrowDropright, IoMdArrowDroprightCircle } from "react-icons/io";
 
-interface TableFooterProps {
+export interface TableFooterProps {
   from: number;
   to: number;
   total: number;

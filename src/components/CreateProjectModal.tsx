@@ -13,6 +13,7 @@ import {
 } from "@heroui/react";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 
 
@@ -35,9 +36,13 @@ export default function CreateProjectModal({
   } = useForm<CreateProjectInput>({defaultValues:{workspaceId:Number(params.id!)}});
 
   const handleCreate = handleSubmit(async (data: CreateProjectInput) => {
-    await createProjectAction(data)
+    const result = await createProjectAction(data)
+    if(result.status==='success'){
+      toast.success("Project created")
     reset();
     onClose();
+    }
+      toast.error(result.error)
   });
 
   return (

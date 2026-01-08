@@ -17,33 +17,39 @@ export async function getSpaceDetailsById(spaceId: number) {
     },
   });
 
-  return space
+  return space;
 }
 
 export type CreateSpaceInput = {
   name: string;
   description: string;
-  projectId:number
+  projectId: number;
 };
 
 export async function createSpaceAction(input: CreateSpaceInput) {
-  const session = await auth();
+  try {
+    const session = await auth();
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
+    if (!session?.user?.id) {
+    return {status:"error",error:"Unauthorized"}
+
+    }
+
+    if (!input.name?.trim()) {
+    return {status:"error",error:"Space name is required"}
+    }
+
+  const space =    await prisma.space.create({
+      data: {
+        name: input.name.trim(),
+        description: input.description?.trim(),
+        projectId: input.projectId,
+      },
+    });
+
+    revalidatePath("/spaces");
+    return {status:"success",data:space}
+  } catch (error: any) {
+    return {status:"error",error:error?.message || error}
   }
-
-  if (!input.name?.trim()) {
-    throw new Error("Space name is required");
-  }
-
-  await prisma.space.create({
-    data: {
-      name: input.name.trim(),
-      description: input.description?.trim(),
-      projectId:input.projectId
-    },
-  });
-
-  revalidatePath("/spaces");
 }

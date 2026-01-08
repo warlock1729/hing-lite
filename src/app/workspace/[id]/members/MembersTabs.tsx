@@ -1,27 +1,39 @@
 "use client"
 
-import { Chip, Tab, Tabs } from "@heroui/react";
-import { useState } from "react";
+import { Chip, Spinner, Tab, Tabs } from "@heroui/react";
+import { Suspense, useState } from "react";
+import { UsersTable } from "./UsersTable";
 const tabs = [
   {
     key: "full",
     label: "Full Members",
-    count: 12,
-    // active: true,
+    component:(workspaceId:number)=><UsersTable
+        key={new Date().toISOString()}
+          workspaceId={workspaceId}
+        />
   },
-  // {
-  //   key: "guests",
-  //   label: "Guests",
-  //   count: 4,
-  // },
-  // {
-  //   key: "pending",
-  //   label: "Pending Invites",
-  //   count: 1,
-  // },
+   {
+    key: "active",
+    label: "Active Members",
+    component:(workspaceId:number)=><UsersTable
+        key={new Date().toISOString()}
+          workspaceId={workspaceId}
+          isRemoved={false}
+        />
+  },
+    {
+    key: "removed",
+    label: "Removed Members",
+    component:(workspaceId:number)=><UsersTable
+        key={new Date().toISOString()}
+          workspaceId={workspaceId}
+          isRemoved={true}
+
+        />
+  },
 ];
 
-export function MembersTabs() {
+export function MembersTabs({tabsCount,workspaceId}:{tabsCount:{key:string,count:number}[],workspaceId:number}) {
   const [selected, setSelected] = useState<string | null>(null);
   return (
     <div className="border-b border-gray-200 dark:border-gray-700">
@@ -61,11 +73,15 @@ export function MembersTabs() {
                       : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                   }
                 >
-                  {tab.count}
+                  {tabsCount.find(t=>t.key===tab.key)?.count}
                 </Chip>
               </div>
             }
-          />
+          >
+             <div className="  mt-2">
+        {tab.component(workspaceId)}
+      </div>
+          </Tab>
         ))}
       </Tabs>
     </div>

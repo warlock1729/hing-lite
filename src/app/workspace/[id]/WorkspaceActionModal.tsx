@@ -65,7 +65,7 @@ export default function CreateWorkspaceModal(workspaceData: WorkspaceProps) {
     if(result.status==='success'){
     reset()
     workspaceData.setIsVisible(false)
-    toast.success("Workspace created successfully")
+    toast.success("Workspace edited successfully")
     }else{
       toast.error(result.error as string)
     }

@@ -9,6 +9,10 @@ import { ActionResult } from "@/types";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { getDefaultWorkspaceId } from "./workspaceActions";
+import { DEFAULT_PROFILE_IMAGE } from "@/constants";
+import { saveAvatar } from "@/lib/server_utils";
+import { sendVerificationMail } from "@/lib/mail";
+import { generateToken } from "@/lib/token";
 
 export async function signInUserAction(
   data: LoginSchema
@@ -51,11 +55,18 @@ export async function registerUserAction(
     });
 
     if (existingUser) return { status: "error", error: "User already exists" };
+
+    const DEFAULT_AVATAR = "/avatar-placeholder.png";
+    let avatarUrl = DEFAULT_AVATAR;
+       if (data.profileImage instanceof File) {
+      avatarUrl = await saveAvatar(data.profileImage,email);
+    }
     const newUser = await prisma.user.create({
       data: {
         name: fullName,
         email,
         passwordHash: hashedPassword,
+        image:avatarUrl,
         workspaceMembers: {
           create: {
             role: "OWNER",
@@ -70,7 +81,8 @@ export async function registerUserAction(
         },
       },
     });
-
+    const verificationToken = await generateToken(email)
+    await sendVerificationMail(email,verificationToken.token)
     return {
       status: "success",
       data: newUser,
