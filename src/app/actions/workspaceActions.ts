@@ -7,7 +7,7 @@ import { FormSchema } from "@/lib/schemas/createWorkspaceSchema";
 import { revalidatePath } from "next/cache";
 
 export async function getDefaultWorkspaceId(email: string) {
-  const { id } = (await prisma.workspace.findFirst({
+  const workspace = (await prisma.workspace.findFirst({
     where: {
       members: {
         some: {
@@ -21,7 +21,7 @@ export async function getDefaultWorkspaceId(email: string) {
     select: { id: true },
   }))!;
 
-  return id;
+  return workspace?.id;
 }
 
 export async function getUserWorkspaceById(

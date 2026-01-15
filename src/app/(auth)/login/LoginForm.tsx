@@ -81,7 +81,7 @@ export default function LoginForm() {
                 errorMessage={errors.password?.message}
               />
               <Button
-                disabled={!isValid || isSubmitSuccessful}
+                disabled={!isValid}
                 isLoading={isLoading || isSubmitting}
                 className="w-full"
                 type="submit"

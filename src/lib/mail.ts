@@ -1,8 +1,41 @@
-import { Resend } from 'resend';
+import nodemailer, { TransportOptions } from "nodemailer";
 
-const API_KEY = process.env.RESEND_API_KEY
+export const TRANSPORTER = {
+  host: process.env.SMTP_HOST!,
+  port: process.env.SMTP_PORT!,
+  secure: true,
+  auth: {
+    user: process.env.SMTP_EMAIL!,
+    pass: process.env.SMTP_PASSWORD!,
+  },
+} as TransportOptions;
 
-const resend = new Resend(API_KEY);
+export interface mailOptions {
+  to: string;
+  subject: string;
+  html: string;
+}
+
+export const sendMail = async (
+  params: mailOptions
+): Promise<[string | null, string | null]> => {
+  const transporter = nodemailer.createTransport(TRANSPORTER);
+
+  if (!transporter) {
+    return [null, "TRANSPORTER_CREATION_ERROR"];
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_EMAIL,
+      ...params,
+    });
+    return [`Mail has been sent: ${info.messageId}`, null];
+  } catch (error) {
+    console.log(error);
+    return [null, "MAIL_ERROR"];
+  }
+};
 
 export async function sendVerificationMail(email: string, token: string) {
   const link = `http://localhost:3000/verify-email?token=${token}`;
@@ -36,11 +69,5 @@ export async function sendVerificationMail(email: string, token: string) {
     </div>
   `;
 
-  return resend.emails.send({
-    from: 'testing@resend.dev',
-    to: email,
-    subject: 'Verify your email',
-    html,
-  });
+  return await sendMail({to:email,subject: "Verification email", html});
 }
-

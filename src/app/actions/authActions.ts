@@ -14,11 +14,30 @@ import { saveAvatar } from "@/lib/server_utils";
 import { sendVerificationMail } from "@/lib/mail";
 import { generateToken } from "@/lib/token";
 
+
+async function getUserByEmail(email:string){
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: email },
+    });
+    return user
+  } catch (error) {
+    
+  }
+}
+
 export async function signInUserAction(
   data: LoginSchema
 ): Promise<ActionResult<string>> {
   try {
-    const wid = await getDefaultWorkspaceId(data.email);
+    const [wid,user] = await Promise.all([getDefaultWorkspaceId(data.email),getUserByEmail(data.email)]);
+    if(!user) return {status:'error',error:"Email does not exist"}
+
+    if(!user.emailVerified){
+      const verificationToken = await generateToken(user.email)
+      console.log(await sendVerificationMail(user.email,verificationToken.token))
+      return {status:"error",error:"Please verify your email address"}
+    }
     const result = await signIn("credentials", {
       ...data,
       redirect: false,
@@ -45,16 +64,14 @@ export async function registerUserAction(
     const validated = registerSchema.safeParse(data);
     if (!validated.success)
       return { status: "error", error: validated.error.issues };
-
+    
     const { email, fullName, password } = validated.data;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email: email },
-    });
+    const existingUser = await getUserByEmail(email)
 
     if (existingUser) return { status: "error", error: "User already exists" };
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const DEFAULT_AVATAR = "/avatar-placeholder.png";
     let avatarUrl = DEFAULT_AVATAR;
@@ -100,3 +117,89 @@ export async function getUserByEmailAction(email: string) {
 
   return user;
 }
+
+
+
+type VerifyEmailResult = {
+  message: string;
+};
+
+export async function verifyEmailAction(
+  token: string | null
+): Promise<ActionResult<VerifyEmailResult>> {
+  if (!token) {
+    return {
+      status: 'error',
+      error: 'Verification token is missing.',
+    };
+  }
+
+  const verificationToken = await prisma.token.findFirst({
+    where: { token },
+  });
+
+  if (!verificationToken) {
+    return {
+      status: 'error',
+      error: 'Invalid verification token.',
+    };
+  }
+
+  if (verificationToken.expires <= new Date()) {
+    await prisma.token.delete({
+      where: { id: verificationToken.id },
+    });
+
+    return {
+      status: 'error',
+      error: 'Verification token has expired. Please request a new one.',
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: verificationToken.email },
+  });
+
+  if (!user) {
+    await prisma.token.delete({
+      where: { id: verificationToken.id },
+    });
+
+    return {
+      status: 'error',
+      error: 'User not found.',
+    };
+  }
+
+  // 6️⃣ Already verified
+  if (user.emailVerified) {
+    await prisma.token.delete({
+      where: { id: verificationToken.id },
+    });
+
+    return {
+      status: 'error',
+      error: 'Your email is already verified.',
+    };
+  }
+
+  // 7️⃣ SUCCESS (atomic)
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { email: user.email },
+      data: { emailVerified: new Date() },
+    }),
+    prisma.token.delete({
+      where: { id: verificationToken.id },
+    }),
+  ]);
+
+  return {
+    status: 'success',
+    data: {
+      message: 'Your email has been verified successfully.',
+    },
+  };
+}
+
+
