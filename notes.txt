@@ -1,6 +1,0 @@
-HeroUI / NextUI
-- Add source and plugin to globals.css
-- import everything from @heroui/{component_name} instead of @heroui/react 
-
-ReactHookForm and Zod
-- use @hookform/resolvers to user RHF with validation libraries like zod easily
